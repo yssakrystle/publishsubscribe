@@ -2,5 +2,5 @@
 
 public interface IStringGenerator
 {
-    string GenerateRandomString(int length, string charSet);
+    Stack<string> GenerateRandomString(int numElements, int length, string charSet);
 }

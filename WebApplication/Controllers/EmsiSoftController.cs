@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models;
 using Shared.Services.Contract;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace WebApi.Controllers;
 
@@ -26,18 +23,31 @@ public class EmsiSoftController : ControllerBase
     {
         try
         {
-            for (int x = 0; x <= 40_000; x++)
-            {
-                string source = _stringGenerator.GenerateRandomString(10, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-                using (SHA1 sha1Hash = SHA1.Create())
-                {
-                    byte[] sourceBytes = Encoding.UTF8.GetBytes(source);
-                    byte[] hashBytes = sha1Hash.ComputeHash(sourceBytes);
-                    string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
 
+            int max = 40_000;
+            int stringLength = 10;
+            string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            Thread thread1 = new(() => Generate(2));
+            Thread thread2 = new(() => Generate(2));
+
+            thread1.Start();
+            thread2.Start();
+
+            void Generate(int numberOfThreads)
+            {
+                Stack<string> source = _stringGenerator.GenerateRandomString(max/numberOfThreads, stringLength, charSet);
+                for (int x = 0; x <= max/numberOfThreads; x++)
+                {
+                    string hash = source.Pop();
                     _messageBroker.Publish(hash, "hashes", "hashes");
                 }
             }
+
+            //stopwatch.Stop();
+            //Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
 
             return Ok();
         }
